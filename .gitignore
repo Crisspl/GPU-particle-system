@@ -1,0 +1,16 @@
+*.ilk
+*.pdb
+*.log
+*.idb
+*.exp
+*.iobj
+*.ipdb
+*.tlog/
+*.tlog
+*.lastbuildstate
+*.VC.db
+*.VC.opendb
+.vs/
+*.sdf
+*.user
+*.suo

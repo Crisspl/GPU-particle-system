@@ -1,0 +1,18 @@
+@require(passthru, functions, enums, options, version, extensions)
+#include <FHL/GL/flextGL.h>
+
+#include <FHL/GL/OpenGlLoader.h>
+
+void flextGLInit() {
+    fhl::impl::OpenGlLoader loader;
+    @for category,funcs in functions:
+    @if funcs and category not in ['VERSION_1_0', 'VERSION_1_1']:
+
+    /* GL_@category */
+    @for f in funcs:
+    flextgl@f.name = reinterpret_cast<@f.returntype\
+(APIENTRY*)(@f.param_type_list_string())>(loader.load("gl@f.name"));
+    @end
+    @end
+    @end
+}
