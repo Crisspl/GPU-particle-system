@@ -10,6 +10,8 @@
 *.lastbuildstate
 *.VC.db
 *.VC.opendb
+Release/
+Debug/
 .vs/
 *.sdf
 *.user

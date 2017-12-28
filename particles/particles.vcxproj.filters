@@ -19,6 +19,12 @@
     <Filter Include="Source Files\gl">
       <UniqueIdentifier>{34cb6a3a-2b8b-4078-90d7-98032f0bf66c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\utility">
+      <UniqueIdentifier>{07bb648a-91de-470b-a5ba-f72b38b7b9a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\utility">
+      <UniqueIdentifier>{985b460d-372b-4f81-8671-4f54e4e50ba4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl\flextGL.h">
@@ -26,6 +32,9 @@
     </ClInclude>
     <ClInclude Include="gl\OpenGlLoader.h">
       <Filter>Header Files\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\Clock.h">
+      <Filter>Header Files\utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -40,6 +49,9 @@
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\Clock.cpp">
+      <Filter>Source Files\utility</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

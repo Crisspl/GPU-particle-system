@@ -87,6 +87,6 @@ namespace fhl
 
 }
 
-#include <FHL/Maths/Mat4.inl>
+#include "Mat4.inl"
 
 #endif
