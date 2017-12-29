@@ -74,8 +74,8 @@
     <LibraryPath>D:\Libs\GLFW\lib-vc2015;D:\Libs\SDL2\libsx86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>D:\Libs\GLFW\include;D:\Libs\SDL2\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Libs\GLFW\lib-vc2015;D:\Libs\SDL2\libsx86;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\Libs\GLFW\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Libs\GLFW\lib-vc2015;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -108,7 +108,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>glfw3dll.lib;opengl32.lib;SDL2-vs.lib;SDL2main-vs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3dll.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -125,15 +125,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="CameraController.h" />
     <ClInclude Include="gl\flextGL.h" />
     <ClInclude Include="gl\OpenGlLoader.h" />
+    <ClInclude Include="maths\Quaternion.h" />
     <ClInclude Include="utility\Clock.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="gl\flextGL.cpp" />
     <ClCompile Include="gl\flextGLInit.cpp" />
     <ClCompile Include="gl\OpenGlLoader.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="maths\Quaternion.cpp" />
     <ClCompile Include="utility\Clock.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

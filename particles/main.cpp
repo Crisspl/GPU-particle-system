@@ -3,8 +3,8 @@
 #include "maths/vectors.h"
 #include "maths/Mat4.h"
 #include "utility/Clock.h"
+#include "CameraController.h"
 
-#include <SDL.h>
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <random>
@@ -22,7 +22,7 @@ layout(location = 0) uniform float dt;\n\
 \n\
 void main() {\n\
 	const uint idx = gl_GlobalInvocationID.x;\n\
-	velocity[idx] *= 1 - .9f * dt;\n\
+	velocity[idx] *= 1 - .8f * dt;\n\
 	position[idx] += velocity[idx] * dt;\n\
 }\
 ";
@@ -84,31 +84,33 @@ int main(int, char**)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	auto window = glfwCreateWindow(800, 600, "particles", NULL, NULL);
+	const fhl::Vec2u WIN_SIZE{800u, 600u};
+	auto window = glfwCreateWindow(WIN_SIZE.x(), WIN_SIZE.y(), "particles", NULL, NULL);
 	glfwMakeContextCurrent(window);
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	// load GL functions
 	flextGLInit();
 
-	std::srand(112);
+	std::srand(997);
 
 	const std::size_t PARTICLE_CNT = 1u << 21; // ~2M
-	const fhl::Vec2u WIN_SIZE{800u, 600u};
 
 	std::vector<fhl::Vec4f> positions;
 	positions.reserve(PARTICLE_CNT);
 	for (float x = 0; x < (1u << 7); ++x)
-	{
 		for (float y = 0; y < (1u << 7); ++y)
-		{
 			for (float z = 0; z < (1u << 7); ++z)
-				positions.push_back(fhl::Vec4f{ x, y, z, 1.f } + fhl::Vec4f{WIN_SIZE/2, fhl::Vec2f::zero()});
-		}
-	}
+				positions.push_back(fhl::Vec4f{x, y, z, 1.f} + fhl::Vec4f{WIN_SIZE/2, fhl::Vec2f::zero()});
 	std::vector<fhl::Vec4f> velocities;
 	velocities.reserve(PARTICLE_CNT);
 	for (std::size_t i = 0; i < PARTICLE_CNT; ++i)
 		velocities.emplace_back(std::rand() % 200, std::rand() % 200, std::rand() % 200, 0);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glDisable(GL_DEPTH_TEST);
 
 	GLuint posBuffer{}, velBuffer{};
 	glCreateBuffers(1, &posBuffer);
@@ -116,6 +118,8 @@ int main(int, char**)
 
 	glNamedBufferStorage(posBuffer, positions.size() * sizeof(fhl::Vec4f), positions.data(), GL_DYNAMIC_STORAGE_BIT);
 	glNamedBufferStorage(velBuffer, velocities.size() * sizeof(fhl::Vec4f), velocities.data(), GL_DYNAMIC_STORAGE_BIT);
+	positions.clear();
+	velocities.clear();
 
 	GLuint cs = makeCs(CS_SRC);
 	GLuint shader = makeGeneralShader(VS_SRC, FS_SRC);
@@ -123,7 +127,7 @@ int main(int, char**)
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, Bindings::PositionBuffer, posBuffer);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, Bindings::VelocityBuffer, velBuffer);
 
-	GLuint vao;
+	GLuint vao{};
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
@@ -134,8 +138,13 @@ int main(int, char**)
 	glVertexAttribPointer(AttrLoc::Velocity, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(fhl::Vec4f::valueType), (void *)0);
 	glEnableVertexAttribArray(AttrLoc::Velocity);
 
-	const fhl::Mat4f pv = fhl::Mat4f::perspective(45.f, -float(WIN_SIZE.x())/WIN_SIZE.y(), 0, 1e3f) * fhl::Mat4f::lookAt(fhl::Vec3f{828.f, 328.f, 350.f}, fhl::Vec3f{464.f, 364.f, 64.f}, fhl::Vec3f::up());
+	fhl::Mat4f proj = fhl::Mat4f::perspective(45.f, -float(WIN_SIZE.x()) / WIN_SIZE.y(), 0, 1e3f);
 	
+	Camera cam{fhl::Vec3f{828.f, 328.f, 350.f}};
+	CameraController camController({&cam});
+	camController.setTranslationSpeed(10.f);
+
+	std::map<int, int> keyStates;
 	fhl::Clock clock;
 	while (!glfwWindowShouldClose(window))
 	{
@@ -147,6 +156,15 @@ int main(int, char**)
 		glUniform1f(UniformLoc::DeltaTime, dt);
 		glDispatchCompute(PARTICLE_CNT >> 6, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		fhl::Vec2lf currentMouse;
+		glfwGetCursorPos(window, &currentMouse.x(), &currentMouse.y());
+		camController.processMousePosition(currentMouse);
+		for (int k : {GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D})
+			keyStates[k] = glfwGetKey(window, k);
+		camController.processKeyStates(keyStates);
+		camController.updateAll();
+		fhl::Mat4f pv = fhl::Mat4f::perspective(45.f, -float(WIN_SIZE.x()) / WIN_SIZE.y(), 0, 1e3f) * cam.getView();
 
 		glUseProgram(shader);
 		glUniformMatrix4fv(UniformLoc::ProjectionView, 1, GL_FALSE, pv.data());
