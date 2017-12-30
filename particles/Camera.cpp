@@ -17,6 +17,7 @@ void Camera::updateViewMatrix()
 
 void Camera::mouseMove(fhl::Vec2f _offset)
 {
+	_offset.y() *= -1;
 	std::swap(_offset.x(), _offset.y());
 	_offset *= 0.02f; // sensitivity
 

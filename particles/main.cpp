@@ -31,13 +31,13 @@ const char * const VS_SRC = "\
 #version 430 core\n\
 layout(location = 0) in vec4 position;\n\
 layout(location = 1) in vec4 velocity;\n\
-layout(location = 0) uniform mat4 pv;\n\
+layout(location = 0) uniform mat4 view;\n\
 out vec3 vs_color;\n\
 const vec3 LO_COLOR = vec3(0xb3, 0xd9, 0xff)/255.f, HI_COLOR = vec3(0xff, 0, 0x66)/255.f;\n\
 \n\
 void main() {\n\
 	vs_color = mix(LO_COLOR, HI_COLOR, smoothstep(0.f, 100.f, length(velocity.xyz)));\n\
-	gl_Position = pv * vec4(position.xyz, 1.f);\n\
+	gl_Position = view * vec4(position.xyz, 1.f);\n\
 }\
 ";
 
@@ -46,14 +46,18 @@ const char * const GS_SRC = "\
 layout(points) in;\n\
 layout(triangle_strip, max_vertices = 4) out;\n\
 \n\
+in vec3 vs_color[];\n\
+out vec3 fs_color;\n\
+\n\
 layout(location = 1) uniform mat4 projection;\n\
 const vec2 offsets[4] = {\n\
-	vec2(0.f, 1.f), vec2(0.f, 0.f), vec2(1.f, 1.f), vec2(1.f, 0.f) };\n\
+	vec2(0.f, 0.f), vec2(1.f, 0.f), vec2(0.f, 1.f), vec2(1.f, 1.f) };\n\
 \n\
 void main() {\n\
+	fs_color = vs_color[0];\n\
 	for (int i = 0; i < 4; ++i) {\n\
 		vec4 pos = gl_in[0].gl_Position;\n\
-		pos.xy += 20.f * (offsets[i] - vec2(0.5f));\n\
+		pos.xy += .5f * (offsets[i] - vec2(0.5f));\n\
 		gl_Position = projection * pos;\n\
 		EmitVertex();\n\
 	}\n\
@@ -62,20 +66,20 @@ void main() {\n\
 
 const char * const FS_SRC = "\
 #version 430 core\n\
-in vec3 vs_color;\n\
+in vec3 fs_color;\n\
 out vec4 color;\n\
 \n\
 void main() {\n\
-	color = vec4(vs_color, 1.f);\n\
+	color = vec4(fs_color, 1.f);\n\
 }\
 ";
 
 enum Bindings { PositionBuffer = 0, VelocityBuffer = 1 };
-enum UniformLoc { DeltaTime = 0, ProjectionView = 0 };
+enum UniformLoc { DeltaTime = 0, View = 0, Projection = 1 };
 enum AttrLoc { Position = 0, Velocity = 1 };
 
 GLuint makeCs(const char * const _src);
-GLuint makeGeneralShader(const char * const _vs, const char * const _fs);
+GLuint makeGeneralShader(const char * const _vs, const char * const _gs, const char * const _fs);
 
 void checkErrors()
 {
@@ -141,7 +145,7 @@ int main(int, char**)
 	velocities.clear();
 
 	GLuint cs = makeCs(CS_SRC);
-	GLuint shader = makeGeneralShader(VS_SRC, FS_SRC);
+	GLuint shader = makeGeneralShader(VS_SRC, GS_SRC, FS_SRC);
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, Bindings::PositionBuffer, posBuffer);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, Bindings::VelocityBuffer, velBuffer);
@@ -157,11 +161,11 @@ int main(int, char**)
 	glVertexAttribPointer(AttrLoc::Velocity, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(fhl::Vec4f::valueType), (void *)0);
 	glEnableVertexAttribArray(AttrLoc::Velocity);
 
-	fhl::Mat4f proj = fhl::Mat4f::perspective(45.f, -float(WIN_SIZE.x()) / WIN_SIZE.y(), 0, 1e3f);
+	const fhl::Mat4f projection = fhl::Mat4f::perspective(45.f, -float(WIN_SIZE.x()) / WIN_SIZE.y(), 0, 1e3f);
 	
 	Camera cam{fhl::Vec3f{828.f, 328.f, 350.f}};
 	CameraController camController({&cam});
-	camController.setTranslationSpeed(10.f);
+	camController.setTranslationSpeed(3.f);
 
 	std::map<int, int> keyStates;
 	fhl::Clock clock;
@@ -183,10 +187,10 @@ int main(int, char**)
 			keyStates[k] = glfwGetKey(window, k);
 		camController.processKeyStates(keyStates);
 		camController.updateAll();
-		fhl::Mat4f pv = fhl::Mat4f::perspective(45.f, -float(WIN_SIZE.x()) / WIN_SIZE.y(), 0, 1e3f) * cam.getView();
 
 		glUseProgram(shader);
-		glUniformMatrix4fv(UniformLoc::ProjectionView, 1, GL_FALSE, pv.data());
+		glUniformMatrix4fv(UniformLoc::View, 1, GL_FALSE, cam.getView().data());
+		glUniformMatrix4fv(UniformLoc::Projection, 1, GL_FALSE, projection.data());
 		// create attrib arrays? dummy vertex attrib? see https://stackoverflow.com/questions/8039929/opengl-drawarrays-without-binding-vbo
 		glDrawArrays(GL_POINTS, 0, PARTICLE_CNT);
 
@@ -234,18 +238,21 @@ GLuint makeCs(const char * const _src)
 	return program;
 }
 
-GLuint makeGeneralShader(const char * const _vs, const char * const _fs)
+GLuint makeGeneralShader(const char * const _vs, const char * const _gs, const char * const _fs)
 {
 	GLuint program = glCreateProgram();
 	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vs, 1, &_vs, nullptr);
 	glCompileShader(vs);
+	GLuint gs = glCreateShader(GL_GEOMETRY_SHADER);
+	glShaderSource(gs, 1, &_gs, nullptr);
+	glCompileShader(gs);
 	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fs, 1, &_fs, nullptr);
 	glCompileShader(fs);
 
 	GLchar infoLog[0x200];
-	for (GLuint s : {vs, fs})
+	for (GLuint s : {vs, gs, fs})
 	{ // check for compilation errors
 		GLint success{};
 		glGetShaderiv(s, GL_COMPILE_STATUS, &success);
@@ -257,11 +264,14 @@ GLuint makeGeneralShader(const char * const _vs, const char * const _fs)
 		}
 	}
 	glAttachShader(program, vs);
+	glAttachShader(program, gs);
 	glAttachShader(program, fs);
 	glLinkProgram(program);
 
 	glDetachShader(program, vs);
 	glDeleteShader(vs);
+	glDetachShader(program, gs);
+	glDeleteShader(gs);
 	glDetachShader(program, fs);
 	glDeleteShader(fs);
 
