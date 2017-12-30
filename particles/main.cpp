@@ -41,6 +41,25 @@ void main() {\n\
 }\
 ";
 
+const char * const GS_SRC = "\
+#version 430 core\n\
+layout(points) in;\n\
+layout(triangle_strip, max_vertices = 4) out;\n\
+\n\
+layout(location = 1) uniform mat4 projection;\n\
+const vec2 offsets[4] = {\n\
+	vec2(0.f, 1.f), vec2(0.f, 0.f), vec2(1.f, 1.f), vec2(1.f, 0.f) };\n\
+\n\
+void main() {\n\
+	for (int i = 0; i < 4; ++i) {\n\
+		vec4 pos = gl_in[0].gl_Position;\n\
+		pos.xy += 20.f * (offsets[i] - vec2(0.5f));\n\
+		gl_Position = projection * pos;\n\
+		EmitVertex();\n\
+	}\n\
+}\
+";
+
 const char * const FS_SRC = "\
 #version 430 core\n\
 in vec3 vs_color;\n\
@@ -201,6 +220,9 @@ GLuint makeCs(const char * const _src)
 	glAttachShader(program, cs);
 	glLinkProgram(program);
 
+	glDetachShader(program, cs);
+	glDeleteShader(cs);
+
 	GLint success;
 	GLchar infoLog[0x200];
 	glGetProgramiv(program, GL_LINK_STATUS, &success);
@@ -237,6 +259,11 @@ GLuint makeGeneralShader(const char * const _vs, const char * const _fs)
 	glAttachShader(program, vs);
 	glAttachShader(program, fs);
 	glLinkProgram(program);
+
+	glDetachShader(program, vs);
+	glDeleteShader(vs);
+	glDetachShader(program, fs);
+	glDeleteShader(fs);
 
 	GLint success;
 	glGetProgramiv(program, GL_LINK_STATUS, &success);
