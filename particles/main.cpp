@@ -19,10 +19,17 @@ layout(std140, binding = 1) restrict buffer Vel {\n\
 	vec4 velocity[];\n\
 };\n\
 layout(location = 0) uniform float dt;\n\
+layout(location = 1) uniform bool attractorActive;\n\
+layout(location = 2) uniform vec3 attractorPosition;\n\
 \n\
 void main() {\n\
 	const uint idx = gl_GlobalInvocationID.x;\n\
-	velocity[idx] *= 1 - .8f * dt;\n\
+	velocity[idx] *= 1 - .99f * dt;\n\
+	if (attractorActive) {\n\
+		float dist = distance(attractorPosition, position[idx].xyz);\n\
+		float power = 10000.f / max(1.f, 0.01f * pow(dist, 1.5f));\n\
+		velocity[idx] += vec4(normalize(attractorPosition - position[idx].xyz), 0.f) * power * dt;\n\
+	}\n\
 	position[idx] += velocity[idx] * dt;\n\
 }\
 ";
@@ -36,7 +43,7 @@ out vec3 vs_color;\n\
 const vec3 LO_COLOR = vec3(0xb3, 0xd9, 0xff)/255.f, HI_COLOR = vec3(0xff, 0, 0x66)/255.f;\n\
 \n\
 void main() {\n\
-	vs_color = mix(LO_COLOR, HI_COLOR, smoothstep(0.f, 100.f, length(velocity.xyz)));\n\
+	vs_color = mix(LO_COLOR, HI_COLOR, smoothstep(0.f, 700.f, length(velocity.xyz)));\n\
 	gl_Position = view * vec4(position.xyz, 1.f);\n\
 }\
 ";
@@ -75,7 +82,8 @@ void main() {\n\
 ";
 
 enum Bindings { PositionBuffer = 0, VelocityBuffer = 1 };
-enum UniformLoc { DeltaTime = 0, View = 0, Projection = 1 };
+enum CsUniformLoc { DeltaTime = 0, AttractorActive = 1, AttractorPosition = 2 };
+enum GeneralShaderUniformLoc { View = 0, Projection = 1 };
 enum AttrLoc { Position = 0, Velocity = 1 };
 
 GLuint makeCs(const char * const _src);
@@ -126,10 +134,7 @@ int main(int, char**)
 		for (float y = 0; y < (1u << 7); ++y)
 			for (float z = 0; z < (1u << 7); ++z)
 				positions.push_back(fhl::Vec4f{x, y, z, 1.f} + fhl::Vec4f{WIN_SIZE/2, fhl::Vec2f::zero()});
-	std::vector<fhl::Vec4f> velocities;
-	velocities.reserve(PARTICLE_CNT);
-	for (std::size_t i = 0; i < PARTICLE_CNT; ++i)
-		velocities.emplace_back(std::rand() % 200, std::rand() % 200, std::rand() % 200, 0);
+	std::vector<fhl::Vec4f> velocities(PARTICLE_CNT, fhl::Vec4f::zero());
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -174,11 +179,20 @@ int main(int, char**)
 		glClearColor(0.f, 0.f, 0.f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		float dt = clock.restart();
+		const float dt = clock.restart();
+		bool mblPressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+		const fhl::Vec3f attractorPosition = cam.getPosition() + -cam.getDirectionVector() * 800.f;
+
 		glUseProgram(cs);
-		glUniform1f(UniformLoc::DeltaTime, dt);
+		glUniform1f(CsUniformLoc::DeltaTime, dt);
+		glUniform1i(CsUniformLoc::AttractorActive, mblPressed);
+		glUniform3fv(CsUniformLoc::AttractorPosition, 1, attractorPosition.data());
 		glDispatchCompute(PARTICLE_CNT >> 6, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		glUseProgram(shader);
+		glUniformMatrix4fv(GeneralShaderUniformLoc::View, 1, GL_FALSE, cam.getView().data());
+		glUniformMatrix4fv(GeneralShaderUniformLoc::Projection, 1, GL_FALSE, projection.data());
 
 		fhl::Vec2lf currentMouse;
 		glfwGetCursorPos(window, &currentMouse.x(), &currentMouse.y());
@@ -188,10 +202,6 @@ int main(int, char**)
 		camController.processKeyStates(keyStates);
 		camController.updateAll();
 
-		glUseProgram(shader);
-		glUniformMatrix4fv(UniformLoc::View, 1, GL_FALSE, cam.getView().data());
-		glUniformMatrix4fv(UniformLoc::Projection, 1, GL_FALSE, projection.data());
-		// create attrib arrays? dummy vertex attrib? see https://stackoverflow.com/questions/8039929/opengl-drawarrays-without-binding-vbo
 		glDrawArrays(GL_POINTS, 0, PARTICLE_CNT);
 
 		checkErrors();
