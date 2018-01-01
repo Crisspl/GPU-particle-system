@@ -130,6 +130,7 @@
     <ClInclude Include="gl\flextGL.h" />
     <ClInclude Include="gl\OpenGlLoader.h" />
     <ClInclude Include="maths\Quaternion.h" />
+    <ClInclude Include="tga\tga.h" />
     <ClInclude Include="utility\Clock.h" />
   </ItemGroup>
   <ItemGroup>
@@ -140,6 +141,7 @@
     <ClCompile Include="gl\OpenGlLoader.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="maths\Quaternion.cpp" />
+    <ClCompile Include="tga\tga.c" />
     <ClCompile Include="utility\Clock.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

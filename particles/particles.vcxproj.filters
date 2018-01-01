@@ -31,6 +31,12 @@
     <Filter Include="Source Files\maths">
       <UniqueIdentifier>{b0f8bd2b-a5ea-44a7-b84e-dc5a2adadae7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\tga">
+      <UniqueIdentifier>{80511997-2a90-49b0-ac9c-65867ea2f75a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\tga">
+      <UniqueIdentifier>{62f50748-fb4f-463e-a339-0398e6deb4d4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl\flextGL.h">
@@ -50,6 +56,9 @@
     </ClInclude>
     <ClInclude Include="CameraController.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tga\tga.h">
+      <Filter>Header Files\tga</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -76,6 +85,9 @@
     </ClCompile>
     <ClCompile Include="CameraController.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tga\tga.c">
+      <Filter>Source Files\tga</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
