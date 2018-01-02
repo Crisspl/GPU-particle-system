@@ -9,6 +9,9 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <random>
+#if defined(FHL_PLATFORM_WINDOWS)
+#include <windows.h>
+#endif
 
 const char * const CS_SRC = "\
 #version 430 core\n\
@@ -98,13 +101,17 @@ GLuint makeGeneralShader(const char * const _vs, const char * const _gs, const c
 GLuint loadTexture(const char * const _path);
 
 void checkErrors();
-
+#if defined(FHL_PLATFORM_WINDOWS)
+int WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+#else
 int main(int, char**)
+#endif
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_RESIZABLE, 0);
 
 	const fhl::Vec2u WIN_SIZE{1280, 720u};
 	auto window = glfwCreateWindow(WIN_SIZE.x(), WIN_SIZE.y(), "particles", NULL, NULL);
@@ -164,7 +171,6 @@ int main(int, char**)
 
 	const fhl::Mat4f projection = fhl::Mat4f::perspective(45.f, -float(WIN_SIZE.x()) / WIN_SIZE.y(), 0, 1e3f);
 	
-	//Camera cam{fhl::Vec3f{828.f, 328.f, 350.f}};
 	Camera cam{fhl::Vec3f{64.f, 64.f, GRAVITY_POINT_DISTANCE_FROM_CAM + 64.f}};
 	CameraController camController({&cam});
 	camController.setTranslationSpeed(10.f);
@@ -203,7 +209,7 @@ int main(int, char**)
 
 		glDrawArrays(GL_POINTS, 0, PARTICLE_CNT);
 
-		checkErrors();
+		//checkErrors();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -268,7 +274,7 @@ GLuint makeGeneralShader(const char * const _vs, const char * const _gs, const c
 		if (!success)
 		{
 			glGetShaderInfoLog(s, 0x200, nullptr, infoLog);
-			std::printf("VS/FS COMPILATION ERROR: %s", infoLog);
+			std::printf("VS/GS/FS COMPILATION ERROR: %s", infoLog);
 			return 0;
 		}
 	}
@@ -288,7 +294,7 @@ GLuint makeGeneralShader(const char * const _vs, const char * const _gs, const c
 	glGetProgramiv(program, GL_LINK_STATUS, &success);
 	if (!success) {
 		glGetProgramInfoLog(program, 0x200, nullptr, infoLog);
-		printf("VS/FS LINK ERROR: %s\n", infoLog);
+		printf("VS/GS/FS LINK ERROR: %s\n", infoLog);
 	}
 
 	return program;
