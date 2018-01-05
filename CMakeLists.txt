@@ -50,7 +50,12 @@ add_executable(particle-system ${SOURCES})
 find_package(OpenGL REQUIRED)
 find_package(GLFW REQUIRED)
 
-target_link_libraries(particle-system ${OPENGL_gl_LIBRARY} ${GLFW_LIBRARIES})
+set(LINK_LIBS ${OPENGL_gl_LIBRARY} ${GLFW_LIBRARIES})
+if (UNIX)
+	list(APPEND LINK_LIBS "${CMAKE_DL_LIBS}")
+endif()
+
+target_link_libraries(particle-system "${LINK_LIBS}")
 target_include_directories(particle-system PUBLIC ${GLFW_INCLUDE_DIRS})
 
 if (WIN32)

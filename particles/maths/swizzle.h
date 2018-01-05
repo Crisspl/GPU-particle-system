@@ -36,7 +36,7 @@ namespace fhl { namespace swizzle
 	constexpr typename VectorTypeForSize<sizeof...(Dims), typename VecT::valueType>::Type
 	get(const VecT & _v)
 	{
-		static_assert(impl::AllTrue<(Dims < VecT::Dimensions)...>::value, "Not enough vector dimensions to get the one(s) demanded");
+		static_assert(impl::AllTrue<((size_t)Dims < (size_t)VecT::Dimensions)...>::value, "Not enough vector dimensions to get the one(s) demanded");
 
 		return{ _v[Dims]... };
 	}
