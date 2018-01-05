@@ -55,6 +55,9 @@ target_include_directories(particle-system PUBLIC ${GLFW_INCLUDE_DIRS})
 
 if (WIN32)
 	add_definitions(-DFHL_PLATFORM_WINDOWS)
+	if (MSVC)
+		add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+	endif()
 	set_target_properties(particle-system PROPERTIES 
 		LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS"
 		LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS"

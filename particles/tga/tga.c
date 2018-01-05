@@ -187,7 +187,7 @@ int load_TGA(tTGA *tga, const char *filename) {
 	int             x = 0, y = 0, i = 0, j = 0;
 	int             raster_width = 0;
 
-	if (fopen_s(&f, filename, "rb") != 0) then return FALSE;
+	if ((f = fopen(filename, "rb")) == NULL) then return FALSE;
 
 	/* header info */
 	if (fread(buffer, 1, SIZEOF_TGA_HEADER, f) != SIZEOF_TGA_HEADER) then return FALSE;

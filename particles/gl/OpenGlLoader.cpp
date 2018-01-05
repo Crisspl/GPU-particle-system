@@ -53,9 +53,9 @@ namespace fhl { namespace impl {
 		dlclose(m_gllib);
 	}
 
-	auto OpenGlLoader::load(const char * _name) -> fptr
+	auto OpenGlLoader::load(const char * _name) -> fptr_t
 	{
-		return reinterpret_cast<fptr>(dlsym(m_gllib, _name));
+		return reinterpret_cast<fptr_t>(dlsym(m_gllib, _name));
 	}
 #else
 	OpenGlLoader::OpenGlLoader()
@@ -70,11 +70,11 @@ namespace fhl { namespace impl {
 		dlclose(m_gllib);
 	}
 
-	auto OpenGlLoader::load(const char * _name) -> fptr
+	auto OpenGlLoader::load(const char * _name) -> fptr_t
 	{
-		static PFNGLXGETPROCADDRESSPROC glx_get_proc_address = dlsym(m_gllib, "glXGetProcAddressARB");
+		static PFNGLXGETPROCADDRESSPROC glx_get_proc_address = reinterpret_cast<PFNGLXGETPROCADDRESSPROC>(dlsym(m_gllib, "glXGetProcAddressARB"));
 
-		return glx_get_proc_address(reinterpret_cast<const GLubyte *>(_name));
+		return reinterpret_cast<fptr_t>(glx_get_proc_address(reinterpret_cast<const GLubyte *>(_name)));
 	}
 #endif
 
