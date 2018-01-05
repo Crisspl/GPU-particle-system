@@ -2,6 +2,8 @@
 #include "mathsFuncs.h"
 #include "swizzle.h"
 
+#include <algorithm>
+
 namespace fhl
 {
 
@@ -16,8 +18,7 @@ namespace fhl
 
 	Quaternion::Quaternion(Vec3f _eulerAngles)
 	{
-		for (int i = 0; i < 3; ++i)
-			_eulerAngles[i] = toRadians(_eulerAngles[i]);
+		std::transform(_eulerAngles.data(), _eulerAngles.data() + 3, const_cast<float *>(_eulerAngles.data()), toRadians<float>);
 
 		const Vec3f c{std::cos(_eulerAngles[0]), std::cos(_eulerAngles[1]), std::cos(_eulerAngles[2]) };
 		const Vec3f s{std::sin(_eulerAngles[0]), std::sin(_eulerAngles[1]), std::sin(_eulerAngles[2])};

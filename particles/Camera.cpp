@@ -19,11 +19,10 @@ void Camera::mouseMove(fhl::Vec2f _offset)
 {
 	_offset.y() *= -1;
 	std::swap(_offset.x(), _offset.y());
-	_offset *= 0.02f; // sensitivity
+	_offset *= m_sensitivity;
 
 	fhl::Quaternion quat(fhl::Vec3f{_offset, 0.f});
-	m_quat = quat * m_quat;
-	m_quat = m_quat.normalized();
+	m_quat = (quat * m_quat).normalized();
 }
 
 void Camera::translate(float _strafe, float _forward)

@@ -1,6 +1,6 @@
 # GPU-particle-system
 The project is system of 2M textured particles interacting with user through gravity point. Gravity point is always in the center of the screen 800 units away from camera and remains active as long as left mouse button is pressed. All particle physics is calculated on GPU with compute shader. Source code of shaders is in main.cpp.  
-VS2017 are provided. For other platforms build please use CMake.  
+VS2017 project files are provided. For other platforms build please use CMake.  
 
 ## Input
 * mouse - camera rotation

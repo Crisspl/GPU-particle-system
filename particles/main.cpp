@@ -101,8 +101,9 @@ GLuint makeGeneralShader(const char * const _vs, const char * const _gs, const c
 GLuint loadTexture(const char * const _path);
 
 void checkErrors();
+
 #if defined(FHL_PLATFORM_WINDOWS)
-int WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+int __stdcall WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #else
 int main(int, char**)
 #endif
@@ -172,6 +173,7 @@ int main(int, char**)
 	const fhl::Mat4f projection = fhl::Mat4f::perspective(45.f, -float(WIN_SIZE.x()) / WIN_SIZE.y(), 0, 1e3f);
 	
 	Camera cam{fhl::Vec3f{64.f, 64.f, GRAVITY_POINT_DISTANCE_FROM_CAM + 64.f}};
+	cam.setSensitivity(0.02f);
 	CameraController camController({&cam});
 	camController.setTranslationSpeed(10.f);
 

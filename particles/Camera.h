@@ -7,11 +7,13 @@
 class Camera
 {
 public:
-	Camera(const fhl::Vec3f & _pos) : m_position{_pos} {}
+	Camera(const fhl::Vec3f & _pos) : m_position{_pos}, m_sensitivity{1.f} {}
 
 	const fhl::Mat4f & getView() const { return m_view; }
 	fhl::Vec3f getDirectionVector() const;
 	fhl::Vec3f getPosition() const { return m_position; }
+
+	void setSensitivity(float _s) { m_sensitivity = _s; }
 
 	void updateViewMatrix();
 	void mouseMove(fhl::Vec2f _offset);
@@ -21,6 +23,7 @@ private:
 	fhl::Quaternion m_quat;
 	fhl::Mat4f m_view;
 	fhl::Vec3f m_position;
+	float m_sensitivity;
 };
 
 #endif
