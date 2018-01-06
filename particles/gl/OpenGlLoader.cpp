@@ -58,23 +58,13 @@ namespace fhl { namespace impl {
 		return reinterpret_cast<fptr_t>(dlsym(m_gllib, _name));
 	}
 #else
-	OpenGlLoader::OpenGlLoader()
-	{
-		m_gllib = dlopen("/System/Library/Frameworks/OpenGL.framework/OpenGL", RTLD_LAZY);
-		if (!m_gllib)
-			throw std::runtime_error{ "FHL: Failed loading OpenGL" };
-	}
+	OpenGlLoader::OpenGlLoader() = default;
 
-	OpenGlLoader::~OpenGlLoader()
-	{
-		dlclose(m_gllib);
-	}
+	OpenGlLoader::~OpenGlLoader() = default;
 
 	auto OpenGlLoader::load(const char * _name) -> fptr_t
 	{
-		static PFNGLXGETPROCADDRESSPROC glx_get_proc_address = reinterpret_cast<PFNGLXGETPROCADDRESSPROC>(dlsym(m_gllib, "glXGetProcAddressARB"));
-
-		return reinterpret_cast<fptr_t>(glx_get_proc_address(reinterpret_cast<const GLubyte *>(_name)));
+		return glXGetProcAddressARB(reinterpret_cast<const GLubyte*>(name));
 	}
 #endif
 
