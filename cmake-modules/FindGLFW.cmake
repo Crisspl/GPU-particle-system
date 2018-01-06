@@ -50,7 +50,7 @@ else()
 	# Find include files
 	find_path(
 		GLFW_INCLUDE_DIR
-		NAMES GLFW/glfw.h
+		NAMES GLFW/glfw3.h
 		PATHS
 		/usr/include
 		/usr/local/include
@@ -62,7 +62,7 @@ else()
 	# Try to use static libraries
 	find_library(
 		GLFW_LIBRARY
-		NAMES glfw3
+		NAMES glfw
 		PATHS
 		/usr/lib64
 		/usr/lib
