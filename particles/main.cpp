@@ -216,6 +216,12 @@ int main(int, char**)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
+	glDeleteBuffers(1, &posBuffer);
+	glDeleteBuffers(1, &velBuffer);
+	glDeleteVertexArrays(1, &vao);
+	glDeleteTextures(1, &particleTex);
+
 	glfwTerminate();
 	return 0;
 }
