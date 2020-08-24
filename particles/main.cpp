@@ -6,7 +6,8 @@
 #include "utility/Clock.h"
 #include "CameraController.h"
 
-#include <GLFW/glfw3.h>
+//#include <GLFW/glfw3.h>
+#include <SDL.h>
 #include <vector>
 #include <random>
 #if defined(FHL_PLATFORM_WINDOWS)
@@ -108,17 +109,33 @@ int __stdcall WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 int main(int, char**)
 #endif
 {
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_RESIZABLE, 0);
+	SDL_Window* window = nullptr;
+	SDL_GLContext maincontext;
 
-	const fhl::Vec2u WIN_SIZE{1280, 720u};
-	auto window = glfwCreateWindow(WIN_SIZE.x(), WIN_SIZE.y(), "particles", NULL, NULL);
-	glfwMakeContextCurrent(window);
+	const fhl::Vec2u WIN_SIZE{ 1280, 720u };
 
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+		return 1;
+	atexit(SDL_Quit);
+	SDL_GL_LoadLibrary(NULL); // Default OpenGL is fine.
+
+	// Request an OpenGL 4.5 context (should be core)
+	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+	// Also request a depth buffer
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
+	window = SDL_CreateWindow(
+		"particles",
+		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+		WIN_SIZE.x(), WIN_SIZE.y(), SDL_WINDOW_OPENGL
+	);
+
+	maincontext = SDL_GL_CreateContext(window);
+
+	glViewport(0, 0, WIN_SIZE.x(), WIN_SIZE.y());
 
 	// load GL functions
 	flextGLInit();
@@ -179,13 +196,29 @@ int main(int, char**)
 
 	std::map<int, int> keyStates;
 	fhl::Clock clock;
-	while (!glfwWindowShouldClose(window))
+	bool quit = false;
+	bool mblPressed = false;// glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+	while (!quit)
 	{
 		glClearColor(0.f, 0.f, 0.f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_QUIT) {
+				quit = true;
+			}
+			else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+				mblPressed = true;
+			else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT)
+				mblPressed = false;
+		}
+		const auto* kb = SDL_GetKeyboardState(nullptr);
+		for (int k : {SDL_SCANCODE_W, SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D})
+			keyStates[k] = kb[k];
+
 		const float dt = clock.restart();
-		bool mblPressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 		const fhl::Vec3f attractorPosition = cam.getPosition() + -cam.getDirectionVector() * GRAVITY_POINT_DISTANCE_FROM_CAM * .75f;
 
 		glUseProgram(cs);
@@ -201,11 +234,12 @@ int main(int, char**)
 		glUniform1i(GeneralShaderUniformLoc::Texture, 0);
 
 		fhl::Vec2lf currentMouse;
-		glfwGetCursorPos(window, &currentMouse.x(), &currentMouse.y());
+		int mx, my;
+		SDL_GetMouseState(&mx, &my);
+		currentMouse.x() = mx;
+		currentMouse.y() = my;
 		camController.processMousePosition(currentMouse);
 
-		for (int k : {GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D})
-			keyStates[k] = glfwGetKey(window, k);
 		camController.processKeyStates(keyStates);
 		camController.updateAll();
 
@@ -213,8 +247,8 @@ int main(int, char**)
 
 		//checkErrors();
 
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+		SDL_GL_SwapWindow(window);
+		//glfwPollEvents();
 	}
 
 	glDeleteBuffers(1, &posBuffer);
@@ -222,7 +256,6 @@ int main(int, char**)
 	glDeleteVertexArrays(1, &vao);
 	glDeleteTextures(1, &particleTex);
 
-	glfwTerminate();
 	return 0;
 }
 

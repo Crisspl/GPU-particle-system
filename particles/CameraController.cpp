@@ -1,17 +1,17 @@
 #include "CameraController.h"
 
-#include <GLFW/glfw3.h>
+#include <SDL.h>
 
 void CameraController::processKeyStates(const std::map<int, int> & _states)
 {
 	static std::map<int, fhl::Vec2f> dirs {
-		std::make_pair(GLFW_KEY_W, fhl::Vec2f::down()),
-		std::make_pair(GLFW_KEY_S, fhl::Vec2f::up()),
-		std::make_pair(GLFW_KEY_A, fhl::Vec2f::right()),
-		std::make_pair(GLFW_KEY_D, fhl::Vec2f::left())
+		std::make_pair(SDL_SCANCODE_W, fhl::Vec2f::down()),
+		std::make_pair(SDL_SCANCODE_S, fhl::Vec2f::up()),
+		std::make_pair(SDL_SCANCODE_A, fhl::Vec2f::right()),
+		std::make_pair(SDL_SCANCODE_D, fhl::Vec2f::left())
 	};
 	for (const auto & s : _states)
-		if (s.second == GLFW_PRESS)
+		if (s.second != 0)
 			translateAllCams(dirs[s.first] * m_translationSpeed);
 }
 
